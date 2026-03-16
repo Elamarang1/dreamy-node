@@ -54,15 +54,15 @@ const razorpay = new Razorpay({
 });
 
 mongoose.connect(
- 'mongodb+srv://9224116110_db_user:5CuJyMurRpyJB9iz@cluster0.vllbone.mongodb.net/product_db?retryWrites=true&w=majority&appName=Cluster0',
+  'mongodb+srv://9224116110_db_user:5CuJyMurRpyJB9iz@cluster0.vllbone.mongodb.net/product_db?retryWrites=true&w=majority&appName=Cluster0',
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 30000
   }
 )
-.then(() => console.log('✅ MongoDB Connected'))
-.catch(err => console.error('❌ MongoDB Error:', err));
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Error:', err));
 
 
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -128,9 +128,14 @@ function saveBase64Image(base64Str, imageId) {
 // FILTER PRODUCTS by brand, minPrice, maxPrice
 app.get('/api/products/filter', async (req, res) => {
   try {
-    let { brand, minPrice, maxPrice } = req.query;
-
+    // let { brand, minPrice, maxPrice } = req.query;
+  let { brand, minPrice, maxPrice, category } = req.query;
     const filter = {};
+
+    // Category filter (string)
+    if (category) {
+      filter.category = category;
+    }
 
     // Normalize brand
     if (brand) {
@@ -192,7 +197,7 @@ app.post('/api/products', async (req, res) => {
     }
 
 
-        // ✅ Extract dimension fields from request body
+    // ✅ Extract dimension fields from request body
     const dimensions = {
       weight: Number(payload.weight) || 0,
       length: Number(payload.length) || 0,
@@ -280,7 +285,7 @@ app.put('/api/products/:id', async (req, res) => {
       });
     }
 
-        // ✅ Extract dimension fields from request body
+    // ✅ Extract dimension fields from request body
     const dimensions = {
       weight: Number(payload.weight) || 0,
       length: Number(payload.length) || 0,
