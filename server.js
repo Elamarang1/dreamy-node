@@ -128,35 +128,58 @@ function saveBase64Image(base64Str, imageId) {
 // FILTER PRODUCTS by brand, minPrice, maxPrice
 app.get('/api/products/filter', async (req, res) => {
   try {
-    // let { brand, minPrice, maxPrice } = req.query;
-  let { brand, minPrice, maxPrice, category } = req.query;
+    const {
+      brand,
+      category,
+      minPrice,
+      maxPrice,
+      sort = 'price',
+      order = 'asc',
+      page = 1,
+      limit = 100
+    } = req.query;
+
     const filter = {};
 
-    // Category filter (string)
+    // Category filter
     if (category) {
       filter.category = category;
     }
 
-    // Normalize brand
+    // Brand filter (multiple)
     if (brand) {
-      if (typeof brand === 'string') {
-        // single brand
-        filter.brand = brand;
-      } else if (Array.isArray(brand)) {
-        // multiple brands
-        filter.brand = { $in: brand };
-      }
+      const brands = Array.isArray(brand) ? brand : [brand];
+      filter.brand = { $in: brands };
     }
 
-    // Normalize price
+    // Price filter
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    const products = await Product.find(filter);
-    res.json(products);
+    // Sorting
+    const sortOption = {};
+    sortOption[sort] = order === 'asc' ? 1 : -1;
+
+    // Pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const products = await Product.find(filter)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Product.countDocuments(filter);
+
+    res.json({
+      products,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / limit)
+    });
+
   } catch (err) {
     console.error('Filter Error:', err);
     res.status(500).json({ error: err.message });
