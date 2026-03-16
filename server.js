@@ -120,6 +120,44 @@ function saveBase64Image(base64Str, imageId) {
 
 
 
+
+
+
+
+
+// FILTER PRODUCTS by brand, minPrice, maxPrice
+app.get('/api/products/filter', async (req, res) => {
+  try {
+    let { brand, minPrice, maxPrice } = req.query;
+
+    const filter = {};
+
+    // Normalize brand
+    if (brand) {
+      if (typeof brand === 'string') {
+        // single brand
+        filter.brand = brand;
+      } else if (Array.isArray(brand)) {
+        // multiple brands
+        filter.brand = { $in: brand };
+      }
+    }
+
+    // Normalize price
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    const products = await Product.find(filter);
+    res.json(products);
+  } catch (err) {
+    console.error('Filter Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // CREATE product
 app.post('/api/products', async (req, res) => {
   try {
@@ -187,43 +225,6 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-
-
-
-// FILTER PRODUCTS by brand, minPrice, maxPrice
-app.get('/api/products/filter', async (req, res) => {
-  try {
-    let { brand, minPrice, maxPrice } = req.query;
-
-    const filter = {};
-
-    // Normalize brand
-    if (brand) {
-      if (typeof brand === 'string') {
-        // single brand
-        filter.brand = brand;
-      } else if (Array.isArray(brand)) {
-        // multiple brands
-        filter.brand = { $in: brand };
-      }
-    }
-
-    // Normalize price
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
-
-    const products = await Product.find(filter);
-    res.json(products);
-  } catch (err) {
-    console.error('Filter Error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
 // READ ALL
 app.get('/api/products', async (req, res) => {
   try {
@@ -245,86 +246,6 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-
-
-
-// app.put('/api/products/:id', async (req, res) => {
-//   try {
-//     const payload = req.body;
-
-//     const images = [];
-//     const variants = [];
-
-//     (payload["images Details"] || []).forEach(image => {
-//       const imageId = imageIdCounter++;
-//       const variantIds = [];
-
-//       let filePath = image.src;
-
-//       if (image.src && image.src.startsWith("data:image")) {
-//         filePath = saveBase64Image(image.src, imageId);
-//       }
-
-//       image["variant Details"].forEach(variant => {
-//         const variantId = variantIdCounter++;
-//         variants.push({
-//           sku: variant.sku,
-//           size: variant.size,
-//           color: variant.color,
-//           image_id: imageId
-//         });
-//         variantIds.push(variantId);
-//       });
-
-//       images.push({
-//         image_id: imageId,
-//         alt: image.alt || 'image not found.',
-//         src: filePath,
-//         variant_id: variantIds
-//       });
-//     });
-
-//     const updated = await Product.findByIdAndUpdate(
-//       req.params.id,
-//       {
-//         title: payload.title,
-//         description: payload.description,
-//         type: payload.type,
-//         brand: payload.brand,
-//         collection: payload.collection || [],
-//         category: payload.category,
-//         price: Number(payload.price),
-//         sale: payload.sale || false,
-//         discount: payload.discount,
-//         stock: Number(payload.stock),
-//         new: payload.newProduct || false,
-//         tags: [...(payload.tags || []), payload.brand || ''],
-//         variants,
-//         images
-//       },
-//       { new: true }
-//     );
-
-//     if (!updated) return res.status(404).json({ error: 'Product not found' });
-
-//     res.json({ message: 'Product updated', data: updated });
-//   } catch (err) {
-//     console.error('Update Error:', err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-
-
-
-
-
-// DELETE
-
-
-
-
-// UPDATE product
 app.put('/api/products/:id', async (req, res) => {
   try {
     const payload = req.body;
@@ -396,8 +317,6 @@ app.put('/api/products/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
